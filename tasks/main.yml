@@ -10,21 +10,19 @@
   failed_when: response.stdout.find('"acknowledged":true') == -1
 
 - name: Stop the elasticsearch service
+  throttle: 1
+  become: true
   service:
-    name: "{{ es_service_name }}"
+    name: "elasticsearch"
     state: stopped
-  sudo: True
 
-- name: Running chef client
-  command: "chef-client {{ es_provisioning_params }}"
-  sudo: True
-  when: es_provisioning
-
-- name: Start the elasticsearch service
-  service:
-    name: "{{ es_service_name }}"
-    state: started
-  sudo: True
+- name: reboot OS
+  throttle: 1
+  become: true
+  reboot:
+    pre_reboot_delay: 5
+    post_reboot_delay: 15
+    reboot_timeout: 300
 
 - name: Wait for the node to rejoin the cluster
   shell: "curl -s -m 2 '{{ es_listening_host }}:{{ es_http_port }}/_cat/nodes?h=name' | wc -l"
